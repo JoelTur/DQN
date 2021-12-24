@@ -48,7 +48,6 @@ class DQN:
                 y[i][action] = reward + GAMMA*np.amax(target_y[i])
             X.append(state)
             Y.append(y[i])
-        print(np.array(Y))
         self.model.train_on_batch(np.array(X), np.array(Y))
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay

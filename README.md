@@ -4,4 +4,9 @@ Implementation of a DQN to play Flappybird. The algorithm is based on the articl
 # Installion instructions:  
 PLE = https://github.com/ntasfi/PyGame-Learning-Environment  
 TS = pip install tensorflow  
-KERAS = pip install Keras
+KERAS = pip install Keras  
+# Running the program
+After succesfull installation of the libraries you can run the progam with command   
+```
+python DQN_FLAPPY.py
+```

@@ -7,11 +7,16 @@ from collections import deque
 from ple.games.flappybird import FlappyBird
 from ple import PLE
 
-learning_rate = 0.00001
+##HYPERPARAMETERS
+learning_rate = 0.0001
 REPLAY_MEMORY_SIZE=100000
 BATCH_SIZE = 64
 GAMMA = 0.99
 EPISODES = 5000
+EPSILON = 1.0
+EPSILON_MIN = 0.1
+EPSILON_DECAY = (EPSILON-EPSILON_MIN)/30000
+
 class DQN:
     def __init__(self, actionSpaceSize, obsSpaceSize):
         self.actionSpaceSize = actionSpaceSize
@@ -20,9 +25,7 @@ class DQN:
         self.target_model = self.create_model()
         self.target_model.set_weights(self.model.get_weights())
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
-        self.epsilon = 1.0
-        self.epsilon_min = 0.1
-        self.epsilon_decay = 0.99
+
     def create_model(self):
         model = Sequential()
         model.add(Dense(256,input_shape = (self.obsSpaceSize,) ))
@@ -51,13 +54,12 @@ class DQN:
             X.append(state)
             Y.append(y[i])
         self.model.train_on_batch(np.array(X), np.array(Y))
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+
     def updateTargetNetwork(self):
         self.target_model.set_weights(self.model.get_weights())            
 
     def getPrediction(self, state):
-        if np.random.rand() > self.epsilon:
+        if np.random.rand() > EPSILON:
             return np.argmax(self.model.predict(np.array([state])))
         return random.randrange(self.actionSpaceSize)
 
@@ -81,16 +83,19 @@ if __name__ == "__main__":
         while True:
             action = agent.getPrediction(state)
             reward = p.act(p.getActionSet()[action])
+            if p.game_over():
+                reward = -1000
             next_state = np.array(list(p.getGameState().values()))
             agent.update_replay_memory((state, action, reward, next_state, p.game_over()))
             state = next_state
-            if len(agent.replay_memory) > BATCH_SIZE:
+            if len(agent.replay_memory) > 1000:
                 agent.train()
-                if t % 10 == 0:
+                EPSILON = max(EPSILON_MIN, EPSILON-EPSILON_DECAY)
+                if t % 1000 == 0:
                     agent.updateTargetNetwork()
             t+=1
             cumureward += reward
             if p.game_over() == True and t % 10000:
                 agent.saveModel()
                 break
-        print("Score:", cumureward, " Episode:", episode, " Epsilon:", agent.epsilon)
+        print("Score:", cumureward, " Episode:", episode, " Epsilon:", EPSILON)

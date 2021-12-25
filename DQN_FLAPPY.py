@@ -9,7 +9,7 @@ from ple.games.flappybird import FlappyBird
 from ple import PLE
 
 ##HYPERPARAMETERS
-learning_rate = 0.001
+learning_rate = 0.0001
 REPLAY_MEMORY_SIZE=100000
 BATCH_SIZE = 64
 GAMMA = 0.99
@@ -29,8 +29,8 @@ class DQN:
 
     def create_model(self):
         model = Sequential()
-        model.add(Dense(64,input_shape = (self.obsSpaceSize,) ))
-        model.add(Dense(64, activation = 'relu'))
+        model.add(Dense(256,input_shape = (self.obsSpaceSize,) ))
+        model.add(Dense(256, activation = 'relu'))
         ##model.add(Dense(64, activation = 'relu'))
         model.add(Dense(self.actionSpaceSize))
         model.compile(loss = 'mse', optimizer=adam_v2.Adam(lr=learning_rate), metrics = ['accuracy'])
@@ -75,12 +75,12 @@ if __name__ == "__main__":
     display_screen = False
     if answer is "y":
         display_screen = True
-    p = PLE(game, force_fps = True, frame_skip=3, display_screen=display_screen)
+    p = PLE(game, force_fps = True, frame_skip=1, display_screen=display_screen)
     p.init()
     state = np.array(list(p.getGameState().values()))
     agent = DQN(len(p.getActionSet()), state.shape[0])
     answer = input("Use a pre-trained model y/n? ")
-    if answer is "Y":
+    if answer is "y":
         agent.loadModel()
         EPSILON = 0.1
     t = 0
@@ -95,18 +95,19 @@ if __name__ == "__main__":
             action = agent.getPrediction(state)
             reward = p.act(p.getActionSet()[action])
             if p.game_over():
-                reward = -1
+                reward = -1000
             next_state = np.array(list(p.getGameState().values()))
             agent.update_replay_memory((state, action, reward, next_state, p.game_over()))
             state = next_state
-            if len(agent.replay_memory) > 1000:
+            if len(agent.replay_memory) > 10000:
                 agent.train()
                 EPSILON = max(EPSILON_MIN, EPSILON-EPSILON_DECAY)
                 if t % 1000 == 0:
                     agent.updateTargetNetwork()
             t+=1
             cumureward += reward
-            if p.game_over() == True and t % 10000:
+            if t % 10000 == 0:
                 agent.saveModel()
+            if p.game_over():
                 break
-        print("Score:", cumureward, " Episode:", episode, " Epsilon:", EPSILON)
+        print("Score:", cumureward, " Episode:", episode, "Time:", t , " Epsilon:", EPSILON)

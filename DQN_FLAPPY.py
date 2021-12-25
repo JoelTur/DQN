@@ -7,10 +7,10 @@ from collections import deque
 from ple.games.flappybird import FlappyBird
 from ple import PLE
 
-learning_rate = 0.001
+learning_rate = 0.00001
 REPLAY_MEMORY_SIZE=100000
-BATCH_SIZE = 32
-GAMMA = 0.95
+BATCH_SIZE = 64
+GAMMA = 0.99
 EPISODES = 5000
 class DQN:
     def __init__(self, actionSpaceSize, obsSpaceSize):
@@ -21,15 +21,15 @@ class DQN:
         self.target_model.set_weights(self.model.get_weights())
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
         self.epsilon = 1.0
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0.1
         self.epsilon_decay = 0.99
     def create_model(self):
         model = Sequential()
-        model.add(Dense(64,input_shape = (self.obsSpaceSize,) ))
-        model.add(Dense(64, activation = 'relu'))
-        ##model.add(Dense(128, activation = 'relu'))
-        model.add(Dense(self.actionSpaceSize, activation = 'linear'))
-        model.compile(loss = 'mse', optimizer=adam_v2.Adam(lr=learning_rate))
+        model.add(Dense(256,input_shape = (self.obsSpaceSize,) ))
+        model.add(Dense(256, activation = 'relu'))
+        ##model.add(Dense(64, activation = 'relu'))
+        model.add(Dense(self.actionSpaceSize))
+        model.compile(loss = 'mse', optimizer=adam_v2.Adam(lr=learning_rate), metrics = ['accuracy'])
         return model
 
     def update_replay_memory(self, transition):
@@ -50,12 +50,11 @@ class DQN:
                 y[i][action] = reward + GAMMA*np.amax(target_y[i])
             X.append(state)
             Y.append(y[i])
-        ##print(np.array(Y))
         self.model.train_on_batch(np.array(X), np.array(Y))
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-    def updateTargetNetwork():
-            self.target_model.set_weights(self.model_get_weights())            
+    def updateTargetNetwork(self):
+        self.target_model.set_weights(self.model.get_weights())            
 
     def getPrediction(self, state):
         if np.random.rand() > self.epsilon:
@@ -67,7 +66,7 @@ class DQN:
 
 if __name__ == "__main__":
     game = FlappyBird(288,512,100)
-    p = PLE(game, force_fps = True, frame_skip=3, display_screen=True)
+    p = PLE(game, force_fps = True, frame_skip=3, display_screen=False)
     p.init()
     state = np.array(list(p.getGameState().values()))
     agent = DQN(len(p.getActionSet()), state.shape[0])
@@ -87,7 +86,7 @@ if __name__ == "__main__":
             state = next_state
             if len(agent.replay_memory) > BATCH_SIZE:
                 agent.train()
-                if t % 2000 == 0:
+                if t % 10 == 0:
                     agent.updateTargetNetwork()
             t+=1
             cumureward += reward

@@ -26,7 +26,7 @@ class DQN:
         self.target_model = self.create_model()
         self.target_model.set_weights(self.model.get_weights())
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
-
+        self.ddqn = True
     def create_model(self):
         model = Sequential()
         model.add(Dense(256,input_shape = (self.obsSpaceSize,) ))
@@ -47,11 +47,14 @@ class DQN:
         Y = []
         y = self.model.predict(np.array(states))
         target_y = self.target_model.predict(np.array(next_states))
+        y_next = self.model.predict(np.array(next_states))
         for i,(state, action, reward, next_state, done) in enumerate(batch):
             if done:
                 y[i][action] = reward
-            else:
+            elif self.ddqn is False:
                 y[i][action] = reward + GAMMA*np.amax(target_y[i])
+            else:
+                y[i][action] = reward + GAMMA*target_y[i][np.argmax(y_next[i])]
             X.append(state)
             Y.append(y[i])
         self.model.train_on_batch(np.array(X), np.array(Y))
@@ -75,7 +78,7 @@ if __name__ == "__main__":
     display_screen = False
     if answer is "y":
         display_screen = True
-    p = PLE(game, force_fps = True, frame_skip=1, display_screen=display_screen)
+    p = PLE(game, force_fps = True, frame_skip=3, display_screen=display_screen)
     p.init()
     state = np.array(list(p.getGameState().values()))
     agent = DQN(len(p.getActionSet()), state.shape[0])
@@ -99,7 +102,7 @@ if __name__ == "__main__":
             next_state = np.array(list(p.getGameState().values()))
             agent.update_replay_memory((state, action, reward, next_state, p.game_over()))
             state = next_state
-            if len(agent.replay_memory) > 10000:
+            if len(agent.replay_memory) > 1000:
                 agent.train()
                 EPSILON = max(EPSILON_MIN, EPSILON-EPSILON_DECAY)
                 if t % 1000 == 0:

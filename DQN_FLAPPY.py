@@ -29,10 +29,10 @@ class DQN:
 
     def create_model(self):
         model = Sequential()
-        model.add(Dense(256,input_shape = (self.obsSpaceSize + 1,) ))
+        model.add(Dense(256,input_shape = (self.obsSpaceSize,) ))
         model.add(Dense(256, activation = 'relu'))
         ##model.add(Dense(64, activation = 'relu'))
-        model.add(Dense(1))
+        model.add(Dense(self.actionSpaceSize))
         model.compile(loss = 'mse', optimizer=adam_v2.Adam(lr=learning_rate), metrics = ['accuracy'])
         return model
 
@@ -42,44 +42,26 @@ class DQN:
     def train(self):
         batch = random.sample(self.replay_memory, BATCH_SIZE)
         states = [transition[0] for transition in batch]
-        next_states_jump = []
-        next_states_skip = []
-        for i, (state,action,reward,next_state, done) in enumerate(batch):
-            cache_j = np.copy(next_state)
-            cache_j = np.append(cache_j, 1)
-            next_states_jump.append( cache_j )
-            #np.delete(next_state, len(next_state) - 1)
-            next_state = np.append(next_state, 0)
-            next_states_skip.append( next_state )
-            np.delete(next_state, len(next_state) - 1)
-        
-        y_jump = self.target_model.predict(np.array(next_states_jump))
-        y_skip = self.target_model.predict(np.array(next_states_skip))
+        next_states = [transition[3] for transition in batch]
         X = []
-        Y = np.zeros(BATCH_SIZE)
-        #target_y = self.target_model.predict(np.array(next_states))
-        
+        Y = []
+        y = self.model.predict(np.array(states))
+        target_y = self.target_model.predict(np.array(next_states))
         for i,(state, action, reward, next_state, done) in enumerate(batch):
             if done:
-                Y[i] = reward
-            else:   
-                Y[i] = reward + GAMMA*max(y_jump[i], y_skip[i])
-        loss = self.model.train_on_batch(np.array(states), Y)
+                y[i][action] = reward
+            else:
+                y[i][action] = reward + GAMMA*np.amax(target_y[i])
+            X.append(state)
+            Y.append(y[i])
+        self.model.train_on_batch(np.array(X), np.array(Y))
 
     def updateTargetNetwork(self):
         self.target_model.set_weights(self.model.get_weights())            
 
     def getPrediction(self, state):
         if np.random.rand() > EPSILON:
-            cache_j = np.copy(state)
-            cache_s = np.copy(state)
-            cache_j = np.append(cache_j, 1)
-            cache_s = np.append(cache_s, 0)
-            jump = self.model.predict(np.array([cache_j]))
-            skip = self.model.predict(np.array([cache_s]))
-            if jump > skip: 
-                return 1
-            return 0
+            return np.argmax(self.model.predict(np.array([state])))
         return random.randrange(self.actionSpaceSize)
 
     def saveModel(self):
@@ -93,7 +75,7 @@ if __name__ == "__main__":
     display_screen = False
     if answer is "y":
         display_screen = True
-    p = PLE(game, force_fps = True, frame_skip=2, display_screen=display_screen)
+    p = PLE(game, force_fps = True, frame_skip=1, display_screen=display_screen)
     p.init()
     state = np.array(list(p.getGameState().values()))
     agent = DQN(len(p.getActionSet()), state.shape[0])
@@ -115,10 +97,9 @@ if __name__ == "__main__":
             if p.game_over():
                 reward = -1000
             next_state = np.array(list(p.getGameState().values()))
-            state = np.append(state,action)
             agent.update_replay_memory((state, action, reward, next_state, p.game_over()))
             state = next_state
-            if len(agent.replay_memory) > 1000:
+            if len(agent.replay_memory) > 10000:
                 agent.train()
                 EPSILON = max(EPSILON_MIN, EPSILON-EPSILON_DECAY)
                 if t % 1000 == 0:

@@ -4,9 +4,9 @@ DQN implementation to play several games. The algorithm is based on the article 
 # Installion instructions:  
 PLE = https://github.com/ntasfi/PyGame-Learning-Environment  
 TS = pip install tensorflow  
-KERAS = pip install Keras
-OpenAI gym = https://gym.openai.com/docs/#installation
-Pytorch = https://pytorch.org/
+KERAS = pip install Keras  
+OpenAI gym = https://gym.openai.com/docs/#installation  
+Pytorch = https://pytorch.org/  
 # Running the program
 After succesfull installation of the libraries you can run DQN_FLAPPY.py with a command   
 ```

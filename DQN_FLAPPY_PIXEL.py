@@ -149,7 +149,7 @@ if __name__ == "__main__":
             cache = state.copy()
             state.append(getFrame(p))
             agent.update_replay_memory((makeState(cache), action, reward, makeState(state), p.game_over()))
-            if len(agent.replay_memory) > 64:
+            if len(agent.replay_memory) > 1000:
                 agent.train(y, target_y, loss_fn, optimizer)
                 EPSILON = max(EPSILON_MIN, EPSILON-EPSILON_DECAY)
                 if t % 1000 == 0:

@@ -93,6 +93,7 @@ class DQN(nn.Module):
 
 if __name__ == "__main__":
     env = gym.make('LunarLander-v2')
+    env.frameskip = 4
     state = env.reset()
     y = NeuralNetwork(env.action_space.n, state.shape[0]).to(device)
     target_y = NeuralNetwork(env.action_space.n, state.shape[0]).to(device)
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     answer = input("Use a pre-trained model y/n? ")
     if answer == "y":
         agent.loadModel()
-        EPSILON = 0.1
+        EPSILON = 0.5697100000003659
     t = 0
     rewards = []
     episodes = []

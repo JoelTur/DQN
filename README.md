@@ -7,7 +7,7 @@ TS = pip install tensorflow
 KERAS = pip install Keras  
 OpenAI gym = https://gym.openai.com/docs/#installation  
 Pytorch = https://pytorch.org/  
-# Running the program
+# Running a program
 After succesfull installation of the libraries you can run DQN_FLAPPY.py with a command   
 ```
 python DQN_FLAPPY.py

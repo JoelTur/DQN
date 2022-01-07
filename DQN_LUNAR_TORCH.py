@@ -49,10 +49,14 @@ class DQN(nn.Module):
         batch = random.sample(self.replay_memory, BATCH_SIZE)
         X = []
         Y = []
+        states = [torch.from_numpy(np.array(transition[0])) for transition in batch]
+        states = torch.stack(states)
+        next_states = [torch.from_numpy(np.array(transition[3])) for transition in batch]
+        next_states = torch.stack(next_states)
         optimizer.zero_grad()
-        y = [agent(torch.from_numpy(np.array(transition[0]))) for transition in batch]
-        target_y = [target(torch.from_numpy(np.array(transition[3]))) for transition in batch]
-        y_next = [agent(torch.from_numpy(np.array(transition[3]))) for transition in batch]
+        y = agent(states)
+        target_y = target(next_states)
+        y_next = agent(next_states)
         for i,(state, action, reward, next_state, done) in enumerate(batch):
             if done:
                 y[i][action] = reward
@@ -62,17 +66,12 @@ class DQN(nn.Module):
                 y[i][action] = reward + GAMMA*target_y[i][torch.argmax(y_next[i])]
             X.append(torch.from_numpy(state))
             Y.append(y[i])
-        cumuLoss = 0
+        Y = torch.stack(Y)
         agent.train()
-        for i in range(len(X)):
-
-            pred = agent(X[i])
-            loss = loss_fn(pred, Y[i].detach())
-            cumuLoss += loss.item()
-
-            #optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        pred = agent(states)
+        loss = loss_fn(pred, Y)
+        loss.backward()
+        optimizer.step()
 
 
     def updateTargetNetwork(self):
@@ -102,8 +101,9 @@ if __name__ == "__main__":
     agent = DQN()
     answer = input("Use a pre-trained model y/n? ")
     if answer == "y":
-        agent.loadModel()
-        EPSILON = 0.5697100000003659
+        agent.loadModel(y)
+        agent.loadModel(target_y)
+        EPSILON = 0.1
     t = 0
     rewards = []
     episodes = []

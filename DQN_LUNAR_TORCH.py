@@ -71,11 +71,7 @@ class DQN(nn.Module):
         pred = agent(states)
         loss = loss_fn(pred, Y)
         loss.backward()
-        optimizer.step()
-
-
-    def updateTargetNetwork(self):
-        self.Q_target = self.Q        
+        optimizer.step()     
 
     def getPrediction(self, state, model):
         if np.random.rand() > EPSILON:

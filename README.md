@@ -1,10 +1,9 @@
 # Implementation of Deep Q-learning
-DQN implementation to play several games. The algorithm is based on the article https://arxiv.org/abs/1312.5602. You need to have Scikit-Image, PLE, Pytorch, OpenAI Gym, TS and Keras installed.
+DQN implementation to play several games. The algorithm is based on the article https://arxiv.org/abs/1312.5602. You need to have Scikit-Image, PLE, Pytorch, OpenAI Gym, and TS installed.
 
 # Installion instructions:  
 PLE = https://github.com/ntasfi/PyGame-Learning-Environment  
-TS = pip install tensorflow  
-KERAS = pip install Keras  
+TS = https://www.tensorflow.org/install  
 OpenAI gym = https://gym.openai.com/docs/#installation  
 Pytorch = https://pytorch.org/  
 Scikit-Image = https://scikit-image.org/docs/stable/install.html  

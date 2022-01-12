@@ -44,10 +44,10 @@ if __name__ == "__main__":
     t = 0
     rewards = []
     avgrewards = []
-    dist = 0
     for episode in range(1,EPISODES+500000000000):
         obs = env.reset()
         cumureward = 0
+        lives = 5
         state.append(getFrame(obs))
         state.append(getFrame(obs))
         state.append(getFrame(obs))
@@ -55,8 +55,9 @@ if __name__ == "__main__":
         while True:
             action = agent.getPrediction(makeState(state),y)
             obs, reward, done, info = env.step(action)
-            if info["ale.lives"] != 5:
+            if info["ale.lives"] < lives:
                 done = True
+                lives -= 1
             env.render()
             cache = state.copy()
             state.append(getFrame(obs))
@@ -70,7 +71,7 @@ if __name__ == "__main__":
             if t % 10000 == 0:
                 agent.saveModel(y,'pixel_atari_weights.pth')
                 graph(rewards, avgrewards,"fetajuusto/DQN-FLAPPY-PIXEL")
-            if done:
+            if done and lives == 0:
                 break
         rewards.append(cumureward)
         avgrewards.append(np.sum(np.array(rewards))/episode)

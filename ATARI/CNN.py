@@ -17,10 +17,10 @@ class NeuralNetwork(nn.Module):
         self.conv3 = nn.Conv2d(64, 64, 3, 1)
         torch.nn.init.kaiming_uniform_(self.conv3.weight)
 
-        self.fc1 = nn.Linear(3136, 256)
+        self.fc1 = nn.Linear(3136, 512)
         torch.nn.init.kaiming_uniform_(self.fc1.weight)
         # Output 2 values: fly up and do nothing
-        self.fc2 = nn.Linear(256, self.actionSpaceSize)
+        self.fc2 = nn.Linear(512, self.actionSpaceSize)
         torch.nn.init.kaiming_uniform_(self.fc2.weight)
         
         self.relu = nn.ReLU(inplace=True)

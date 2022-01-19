@@ -1,6 +1,6 @@
 import neptune.new as neptune
 
-def graph(rewards, avg_rewards, projectname):
+def graph(rewards, avg_rewards, loss, projectname):
 
 
     run = neptune.init(
@@ -11,7 +11,9 @@ def graph(rewards, avg_rewards, projectname):
     for i  in range(len(rewards)):
         run["rewards per episode"].log(rewards[i])
         run["avg reward per episode"].log(avg_rewards[i])
-
+    if len(loss) > 0:
+        for item in loss:
+            run["loss per episode"].log(item)
 
 
     run.stop()

@@ -6,8 +6,8 @@ import random
 import numpy as np
 from collections import deque
 
-REPLAY_MEMORY_SIZE=10**4
-BATCH_SIZE = 64
+REPLAY_MEMORY_SIZE=2*10**5
+BATCH_SIZE = 32
 GAMMA = 0.99
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -19,21 +19,20 @@ class DQN(nn.Module):
     def __init__(self):
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
         self.ddqn = True
-        self.EPSILON = 0.1
+        self.EPSILON = 1
         self.EPSILON_MIN = 0.1
-        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/30000
+        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/250000.0
 
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
     def train(self, agent, target, loss_fn, optimizer):
         batch = random.sample(self.replay_memory, BATCH_SIZE)
-        X = []
         Y = []
-        states = [torch.from_numpy(np.array(transition[0])) for transition in batch]
+        states = [torch.from_numpy(np.array(transition[0])/255) for transition in batch]
         states = torch.stack(states)
         states = states.float()
-        next_states = [torch.from_numpy(np.array(transition[3])) for transition in batch]
+        next_states = [torch.from_numpy(np.array(transition[3])/255) for transition in batch]
         next_states = torch.stack(next_states)
         next_states = next_states.float()
         optimizer.zero_grad()
@@ -47,7 +46,6 @@ class DQN(nn.Module):
                 y[i][action] = reward + GAMMA*torch.max(target_y[i])
             else:
                 y[i][action] = reward + GAMMA*target_y[i][torch.argmax(y_next[i])]
-            X.append(torch.from_numpy(state))
             Y.append(y[i])
         Y = torch.stack(Y)
         agent.train()
@@ -56,6 +54,8 @@ class DQN(nn.Module):
         loss.backward()
         optimizer.step()
         self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-self.EPSILON_DECAY)    
+        return loss.item()
+
 
     def getPrediction(self, state, model):
         if np.random.rand() > self.EPSILON:

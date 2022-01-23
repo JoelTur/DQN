@@ -11,7 +11,7 @@ import gym
 import DQN
 import CNN
 ##HYPERPARAMETERS
-learning_rate = 0.00025
+learning_rate = 0.00001
 EPISODES = 5000
 INPUTSIZE = (84,84)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     if answer == "y":
         agent.loadModel(y,'pixel_atari_weights.pth')
         agent.loadModel(target_y,'pixel_atari_weights.pth')
-    t = 0
+    frames_seen = 0
     rewards = []
     avgrewards = []
     loss = []
@@ -58,23 +58,26 @@ if __name__ == "__main__":
         while True:
             action = agent.getPrediction(makeState(state)/255,y)
             obs, reward, done, info = env.step(action)
+            if info["ale.lives"] < lives:
+                done = True
+                lives -= 1
             env.render()
             cache = state.copy()
             state.append(getFrame(obs))
             agent.update_replay_memory((makeState(cache), action, reward, makeState(state), done))
-            if len(agent.replay_memory) > 25000:
+            if len(agent.replay_memory) > 50000 and frames_seen % 4 == 0:
                 loss.append(agent.train(y, target_y, loss_fn, optimizer))
-                if t % 10000 == 0:
+                if frames_seen % 10000 == 0:
                     target_y.load_state_dict(y.state_dict())
                     print("Target net updated.")
-            t+=1
+            frames_seen+=1
             cumureward += reward
-            if t % 10000 == 0:
+            if frames_seen % 10000 == 0:
                 agent.saveModel(y,'pixel_atari_weights.pth')
-            if done:
+            if done and lives == 0:
                 break
         rewards.append(cumureward)
         avgrewards.append(np.sum(np.array(rewards))/episode)
-        print("Score:", cumureward, " Episode:", episode, "Time:", t , " Epsilon:", agent.EPSILON)
+        print("Score:", cumureward, " Episode:", episode, " frames_seen:", frames_seen , " Epsilon:", agent.EPSILON)
         if episode % 1000 == 0:
-                graph(rewards, avgrewards, loss, "fetajuusto/DQN-FLAPPY-PIXEL")
+            graph(rewards, avgrewards, loss, "fetajuusto/DQN-FLAPPY-PIXEL")

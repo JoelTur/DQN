@@ -19,9 +19,9 @@ class DQN(nn.Module):
     def __init__(self):
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
         self.ddqn = True
-        self.EPSILON = 1
+        self.EPSILON = 0.1
         self.EPSILON_MIN = 0.1
-        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/250000.0
+        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/250000
 
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
@@ -52,8 +52,10 @@ class DQN(nn.Module):
         pred = agent(states)
         loss = loss_fn(pred, Y)
         loss.backward()
+        for param in agent.parameters():
+            param.grad.data.clamp_(-1, 1)
         optimizer.step()
-        self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-self.EPSILON_DECAY)    
+        self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-self.EPSILON_DECAY)
         return loss.item()
 
 

@@ -29,11 +29,10 @@ def getFrame(x):
 def makeState(state):
     return np.stack((state[0],state[1],state[2],state[3]), axis=0)
 
-if __name__ == "__main__":
-    env = gym.make('BreakoutDeterministic-v4')
+def train(game):
+    env = gym.make(game)
     y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
     target_y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.HuberLoss()
     optimizer = optim.Adam(y.parameters(), lr = learning_rate)
     agent = DQN.DQN()
@@ -81,3 +80,7 @@ if __name__ == "__main__":
         print("Score:", cumureward, " Episode:", episode, " frames_seen:", frames_seen , " Epsilon:", agent.EPSILON)
         if episode % 1000 == 0:
             graph(rewards, avgrewards, loss, "fetajuusto/DQN-FLAPPY-PIXEL")
+
+if __name__ == "__main__":
+    game = 'BreakoutDeterministic-v4'
+    train(game)

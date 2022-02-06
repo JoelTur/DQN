@@ -12,3 +12,6 @@ After succesfull installation of the libraries you can run DQN_FLAPPY.py with a 
 python ATARI_SIMULATION.py
 ```
 
+# Results
+
+

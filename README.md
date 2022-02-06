@@ -14,4 +14,4 @@ python ATARI_SIMULATION.py
 
 # Results
 
-Breakout 171
+Breakout 171 on avarage.

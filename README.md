@@ -14,4 +14,7 @@ python ATARI_SIMULATION.py
 
 # Results
 
-Breakout 275 on avarage.
+| GAME          | SCORE         |        
+| ------------- | ------------- |
+| BREAKOUT      | 275           |
+| PONG          | 20.5          |

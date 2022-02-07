@@ -17,4 +17,4 @@ python ATARI_SIMULATION.py
 | GAME          | SCORE         |        
 | ------------- | ------------- |
 | BREAKOUT      | 275           |
-| PONG          | 20.5          |
+| PONG          | 20.75          |

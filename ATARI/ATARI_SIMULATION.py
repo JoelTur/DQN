@@ -9,11 +9,11 @@ import skimage
 from wandb import wandb
 from graphs import graph
 import gym
-import flappy_bird_gym
+import gym_ple
 import DQN
 import CNN
 ##HYPERPARAMETERS
-learning_rate = 0.000025 ## 0.00025 ~ 100avg reward after 10m iterations 0.00001 lr to achieve around 280 avr reward
+learning_rate = 0.00025 ## 0.00025 ~ 100avg reward after 10m iterations 0.00001 lr to achieve around 280 avr reward
 EPISODES = 5000
 INPUTSIZE = (84,84)
 START_TRAINING_AT_STEP = 5000
@@ -25,7 +25,7 @@ torch.autograd.set_detect_anomaly(True)
    
 def getFrame(x):
     #x = x[35:210,0:160]## For breakout, pong
-    x = x[0:288,0:405] #flappybird
+    x = x[0:405,0:288] #flappybird
     #x = x[75:170,10:160]#For robotank :D
     state = skimage.color.rgb2gray(x)
     state = skimage.transform.resize(state, INPUTSIZE)
@@ -46,8 +46,7 @@ def clip_reward(reward):
 
 def train(game):
     #import time
-    #env = gym.make(game)
-    env = flappy_bird_gym.make(game)
+    env = gym.make(game)
     y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
     target_y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
     loss_fn = nn.HuberLoss()
@@ -77,13 +76,13 @@ def train(game):
             ##Repeat same action four times for flappybird/doom otherwise set it to one.
             for repeat in range(4):
                 obs, reward, done, info = env.step(action)
-                if done:
+                if done or reward == 1:
                     break
             ##uncomment for atari
             #if info["ale.lives"] < lives:
             #    done = True
             #    lives -= 1
-            #env.render()
+            env.render()
             cache = state.copy()
             state.append(getFrame(obs))
             agent.update_replay_memory((makeState(cache), action, clip_reward(reward), makeState(state), done))
@@ -161,6 +160,6 @@ if __name__ == "__main__":
     #game = "SpaceInvadersDeterministic-v4"
     #game = "PongDeterministic-v4"
     #game = "RobotankDeterministic-v4"
-    game = 'FlappyBird-rgb-v0'
+    game = 'FlappyBird-v0'
     train(game)
     #test(game)

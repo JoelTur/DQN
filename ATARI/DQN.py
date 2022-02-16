@@ -6,28 +6,27 @@ import random
 import numpy as np
 from collections import deque
 
-REPLAY_MEMORY_SIZE=2*10**5
-BATCH_SIZE = 32
-GAMMA = 0.99
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
 
 class DQN(nn.Module):
 
-    def __init__(self):
-        self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
+    def __init__(self, replay_memory_size = 2*10**5, batch_size = 32, gamma = 0.99, epsilon = 1, epsilon_min = 0.1,  epsilon_decay = 250000):
+        self.replay_memory = deque(maxlen=replay_memory_size)
         self.ddqn = True
-        self.EPSILON = 0.1
-        self.EPSILON_MIN = 0.1
-        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/250000
+        self.REPLAY_MEMORY_SIZE = replay_memory_size
+        self.BATCH_SIZE = batch_size
+        self.GAMMA = gamma
+        self.EPSILON = epsilon
+        self.EPSILON_MIN = epsilon_min
+        self.EPSILON_DECAY = (self.EPSILON-self.EPSILON_MIN)/epsilon_decay
 
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
     def train(self, agent, target, loss_fn, optimizer):
-        batch = random.sample(self.replay_memory, BATCH_SIZE)
+        batch = random.sample(self.replay_memory, self.BATCH_SIZE)
         Y = []
         states = [torch.from_numpy(np.array(transition[0])/255) for transition in batch]
         states = torch.stack(states)
@@ -43,9 +42,9 @@ class DQN(nn.Module):
             if done:
                 y[i][action] = reward
             elif self.ddqn is False:
-                y[i][action] = reward + GAMMA*torch.max(target_y[i])
+                y[i][action] = reward + self.GAMMA*torch.max(target_y[i])
             else:
-                y[i][action] = reward + GAMMA*target_y[i][torch.argmax(y_next[i])]
+                y[i][action] = reward + self.GAMMA*target_y[i][torch.argmax(y_next[i])]
             Y.append(y[i])
         Y = torch.stack(Y)
         agent.train()

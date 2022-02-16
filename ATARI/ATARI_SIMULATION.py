@@ -12,13 +12,21 @@ import gym
 import gym_ple
 import DQN
 import CNN
+
 ##HYPERPARAMETERS
-learning_rate = 0.00025 ## 0.00025 ~ 100avg reward after 10m iterations 0.00001 lr to achieve around 280 avr reward
+learning_rate = 0.00001 ## 0.00025 ~ 100avg reward after 10m iterations 0.00001 lr to achieve around 280 avr reward
 EPISODES = 5000
 INPUTSIZE = (84,84)
 START_TRAINING_AT_STEP = 5000
 TRAINING_FREQUENCY = 4
 TARGET_NET_UPDATE_FREQUENCY = 10000
+REPLAY_MEMORY_SIZE=2*10**5 ## 2*10**5 for atari,
+BATCH_SIZE = 32
+GAMMA = 0.99 #0.99
+EPSILON = 1.0
+EPSILON_MIN = 0.1
+EPSILON_DECAY = 250000
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 torch.autograd.set_detect_anomaly(True)
@@ -51,7 +59,7 @@ def train(game):
     target_y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
     loss_fn = nn.HuberLoss()
     optimizer = optim.Adam(y.parameters(), lr = learning_rate)
-    agent = DQN.DQN()
+    agent = DQN.DQN(REPLAY_MEMORY_SIZE, BATCH_SIZE, GAMMA, EPSILON, EPSILON_MIN, EPSILON_DECAY)
     state = deque(maxlen = 4)
     print(y)
     answer = input("Use a pre-trained model y/n? ")
@@ -110,8 +118,8 @@ def test(game):
     import time
     env = gym.make(game)
     y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
-    agent = DQN.DQN()
-    agent.loadModel(y,'pixel_atari_weights.pth')
+    agent = DQN.DQN(REPLAY_MEMORY_SIZE, BATCH_SIZE, GAMMA, EPSILON, EPSILON_MIN, EPSILON_DECAY)
+    agent.loadModel(y,'flappybird.pth')
     state = deque(maxlen = 4)
     print(y)
     lives = 0
@@ -153,7 +161,8 @@ def test(game):
             games += 1
         if games == 100:
             break
-    graph(rewards, avgrewards, [], "fetajuusto/DQN-FLAPPY-PIXEL")
+    wandb.init(project="BREAKOUT_DQN", entity="neuroori") 
+    wandb.log({"Reward per episode":rewards})
 
 if __name__ == "__main__":
     #game = 'BreakoutDeterministic-v4'

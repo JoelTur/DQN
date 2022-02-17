@@ -18,3 +18,4 @@ python ATARI_SIMULATION.py
 | ------------- | ------------- |
 | BREAKOUT      | 275           |
 | PONG          | 20.75          |
+| Flappybird    | 47.59

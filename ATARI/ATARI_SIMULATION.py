@@ -23,7 +23,7 @@ TARGET_NET_UPDATE_FREQUENCY = 10000
 REPLAY_MEMORY_SIZE=2*10**5 ## 2*10**5 for atari,
 BATCH_SIZE = 32
 GAMMA = 0.99 #0.99
-EPSILON = 1.0
+EPSILON = 0
 EPSILON_MIN = 0.1
 EPSILON_DECAY = 250000
 
@@ -119,7 +119,7 @@ def test(game):
     env = gym.make(game)
     y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
     agent = DQN.DQN(REPLAY_MEMORY_SIZE, BATCH_SIZE, GAMMA, EPSILON, EPSILON_MIN, EPSILON_DECAY)
-    agent.loadModel(y,'flappybird.pth')
+    agent.loadModel(y,'pixel_atari_weights.pth')
     state = deque(maxlen = 4)
     print(y)
     lives = 0
@@ -137,6 +137,8 @@ def test(game):
         action = agent.getPrediction(makeState(state)/255,y)
         for i in range(4):
             obs, reward, done, info = env.step(action)
+            if done or reward == 1:
+                break
         state.append(getFrame(obs))
         score += reward
         cumureward += reward
@@ -170,5 +172,5 @@ if __name__ == "__main__":
     #game = "PongDeterministic-v4"
     #game = "RobotankDeterministic-v4"
     game = 'FlappyBird-v0'
-    train(game)
-    #test(game)
+    #train(game)
+    test(game)

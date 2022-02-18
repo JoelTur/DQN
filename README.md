@@ -17,5 +17,6 @@ python ATARI_SIMULATION.py
 | GAME          | SCORE         |        
 | ------------- | ------------- |
 | BREAKOUT      | 275           |
-| PONG          | 20.75          |
-| Flappybird    | 47.59
+| PONG          | 20.75         |
+| Flappybird    | 47.59         |
+| Robotank      | 38            |

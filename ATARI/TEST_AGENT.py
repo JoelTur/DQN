@@ -8,6 +8,7 @@ from wandb import wandb
 from graphs import graph
 import gym
 import gym_ple
+import vizdoomgym
 import DQN
 import CNN
 import hyperparameters
@@ -21,8 +22,8 @@ torch.autograd.set_detect_anomaly(True)
 def test(game):
     env = gym.make(game)
     y = CNN.NeuralNetwork(env.action_space.n, None).to(device)
-    agent = DQN.DQN(hyperparameters.REPLAY_MEMORY_SIZE, hyperparameters.BATCH_SIZE, hyperparameters.GAMMA, hyperparameters.EPSILON, hyperparameters.EPSILON_MIN, hyperparameters.EPSILON_DECAY)
-    agent.loadModel(y,'pixel_atari_weights.pth')
+    agent = DQN.DQN(hyperparameters.REPLAY_MEMORY_SIZE, hyperparameters.BATCH_SIZE, hyperparameters.GAMMA, 0, 0, hyperparameters.EPSILON_DECAY)
+    agent.loadModel(y,game +'.pth')
     state = deque(maxlen = 4)
     print(y)
     lives = 0
@@ -41,12 +42,12 @@ def test(game):
         for i in range(4):
             obs, reward, done, info = env.step(action)
             if done or reward == 1:
-                break
+               break
         state.append(getFrame(obs))
         score += reward
         cumureward += reward
         env.render()
-        time.sleep(1/30)
+        #time.sleep(1/30)
         #if info["ale.lives"] < lives:
         #    done = True
         #    lives -= 1
@@ -66,13 +67,14 @@ def test(game):
             games += 1
         if games == 100:
             break
-    wandb.init(project="BREAKOUT_DQN", entity="neuroori") 
-    wandb.log({"Reward per episode":rewards})
+    print(np.sum(np.array(rewards))/games)
 
 if __name__ == "__main__":
     #game = 'BreakoutDeterministic-v4'
     #game = "SpaceInvadersDeterministic-v4"
     #game = "PongDeterministic-v4"
-    game = "RobotankDeterministic-v4"
+    #game = "RobotankDeterministic-v4"
+    game = "VizdoomDefendCenter-v0"
+    #game = "VizdoomDeathmatch-v0"
     #game = 'FlappyBird-v0'
     test(game)

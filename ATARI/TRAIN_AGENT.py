@@ -8,6 +8,7 @@ from wandb import wandb
 from graphs import graph
 import gym
 import gym_ple
+import vizdoomgym
 import DQN
 import CNN
 from process_state import clip_reward, makeState, getFrame
@@ -30,17 +31,17 @@ def train(game):
     print(y)
     answer = input("Use a pre-trained model y/n? ")
     if answer == "y":
-        agent.loadModel(y,'pixel_atari_weights.pth')
-        agent.loadModel(target_y,'pixel_atari_weights.pth')
+        agent.loadModel(y,game + '.pth')
+        agent.loadModel(target_y,game +'.pth')
     frames_seen = 0
     rewards = []
     avgrewards = []
     loss = []
-    wandb.init(project="BREAKOUT_DQN", entity="neuroori") 
+    wandb.init(project="DQN_" +game, entity="neuroori") 
     for episode in range(1,hyperparameters.EPISODES+500000000000):
         obs = env.reset()
         cumureward = 0
-        lives = 3 ## 5 for breakout, 3 for spaceinvaders, 0 for pong, 3 for robotank :D
+        lives = 0 ## 5 for breakout, 3 for spaceinvaders, 0 for pong, 3 for robotank :D
         state.append(getFrame(obs))
         state.append(getFrame(obs))
         state.append(getFrame(obs))
@@ -48,14 +49,14 @@ def train(game):
         while True:
             action = agent.getPrediction(makeState(state)/255,y)
             ##Repeat same action four times for flappybird/doom otherwise set it to one.
-            #for repeat in range(4):
-            obs, reward, done, info = env.step(action)
-            #    if done or reward == 1:
-            #        break
+            for repeat in range(4):
+                obs, reward, done, info = env.step(action)
+                if done or reward == 1:
+                    break
             ##uncomment for atari
-            if info["ale.lives"] < lives:
-                done = True
-                lives -= 1
+            #if info["ale.lives"] < lives:
+            #    done = True
+            #    lives -= 1
             env.render()
             cache = state.copy()
             state.append(getFrame(obs))
@@ -84,6 +85,8 @@ if __name__ == "__main__":
     #game = 'BreakoutDeterministic-v4'
     #game = "SpaceInvadersDeterministic-v4"
     #game = "PongDeterministic-v4"
-    game = "RobotankDeterministic-v4"
+    #game = "RobotankDeterministic-v4"
+    #game = "VizdoomDefendCenter-v0"
+    game = "VizdoomDeathmatch-v0"
     #game = 'FlappyBird-v0'
     train(game)

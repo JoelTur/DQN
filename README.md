@@ -6,7 +6,7 @@ DQN implementation to play several games. The algorithm is based on the article 
 OpenAI gym = https://gym.openai.com/docs/#installation  
 Pytorch = https://pytorch.org/  
 Scikit-Image = https://scikit-image.org/docs/stable/install.html  
-# Running a program
+# Running the program
 After succesfull installation of the libraries you can run DQN_FLAPPY.py with a command   
 ```
 python ATARI_SIMULATION.py

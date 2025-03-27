@@ -16,7 +16,7 @@ This project implements a Deep Q-Network (DQN) agent for playing Atari games usi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/JoelTur/DQN.git
+git clone https://github.com/youruname/DQN.git
 cd DQN
 ```
 

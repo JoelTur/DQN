@@ -2,26 +2,6 @@
 
 This project implements a Deep Q-Network (DQN) agent for playing Atari games using PyTorch. The implementation includes prioritized experience replay, frame stacking, and various optimizations for better training performance.
 
-## Project Structure
-
-```
-.
-├── config/
-│   ├── __init__.py
-│   ├── config.py          # Configuration settings
-│   └── hyperparameters.py # Hyperparameters for different games
-├── models/
-│   ├── __init__.py
-│   ├── cnn.py            # CNN architecture
-│   └── dqn.py            # DQN implementation
-├── utils/
-│   ├── __init__.py
-│   └── process_state.py  # Frame processing utilities
-├── TRAIN_AGENT.py        # Training script
-├── TEST_AGENT.py         # Testing script
-├── requirements.txt      # Project dependencies
-└── README.md            # This file
-```
 
 ## Features
 
@@ -36,7 +16,7 @@ This project implements a Deep Q-Network (DQN) agent for playing Atari games usi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/dqn-atari.git
+git clone https://github.com/yourusername/DQN.git
 cd dqn-atari
 ```
 

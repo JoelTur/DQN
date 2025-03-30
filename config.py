@@ -14,12 +14,12 @@ class TrainingConfig:
     GAMMA: float = 0.99
     
     # Replay memory parameters
-    REPLAY_MEMORY_SIZE: int = 10**6
+    REPLAY_MEMORY_SIZE: int = 4*10**5
     BATCH_SIZE: int = 32
     
     # Exploration parameters
     EPSILON: float = 1
-    EPSILON_MIN: float = 0.01
+    EPSILON_MIN: float = 0.1
     EPSILON_DECAY: float = 10**6
     
     # Environment parameters

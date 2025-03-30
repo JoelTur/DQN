@@ -1,0 +1,15 @@
+{"time":"2025-03-28T10:15:11.325099371+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/home/Joel/projects/DQN/wandb/run-20250328_101511-ogn77fy5/logs/debug-core.log"}
+{"time":"2025-03-28T10:15:11.42687158+02:00","level":"INFO","msg":"created new stream","id":"ogn77fy5"}
+{"time":"2025-03-28T10:15:11.426895068+02:00","level":"INFO","msg":"stream: started","id":"ogn77fy5"}
+{"time":"2025-03-28T10:15:11.426922125+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:15:11.426931311+02:00","level":"INFO","msg":"handler: started","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:15:11.426948317+02:00","level":"INFO","msg":"sender: started","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:15:11.685003407+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-03-28T10:20:26.806010247+02:00","level":"INFO","msg":"stream: closing","id":"ogn77fy5"}
+{"time":"2025-03-28T10:20:26.80605037+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-03-28T10:20:26.806415195+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-03-28T10:20:27.949649189+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-03-28T10:20:28.178968914+02:00","level":"INFO","msg":"handler: closed","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:20:28.179025979+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:20:28.179032939+02:00","level":"INFO","msg":"sender: closed","stream_id":"ogn77fy5"}
+{"time":"2025-03-28T10:20:28.179069839+02:00","level":"INFO","msg":"stream: closed","id":"ogn77fy5"}

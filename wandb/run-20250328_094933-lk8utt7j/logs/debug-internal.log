@@ -1,0 +1,15 @@
+{"time":"2025-03-28T09:49:33.322368789+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/home/Joel/projects/DQN/wandb/run-20250328_094933-lk8utt7j/logs/debug-core.log"}
+{"time":"2025-03-28T09:49:33.425528916+02:00","level":"INFO","msg":"created new stream","id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:33.425569127+02:00","level":"INFO","msg":"stream: started","id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:33.425582554+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:33.425610547+02:00","level":"INFO","msg":"sender: started","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:33.425630867+02:00","level":"INFO","msg":"handler: started","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:33.778652973+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-03-28T09:49:42.213078244+02:00","level":"INFO","msg":"stream: closing","id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:42.215858315+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-03-28T09:49:42.21631715+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-03-28T09:49:43.184218148+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-03-28T09:49:43.401290821+02:00","level":"INFO","msg":"handler: closed","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:43.401317115+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:43.401324285+02:00","level":"INFO","msg":"sender: closed","stream_id":"lk8utt7j"}
+{"time":"2025-03-28T09:49:43.401406569+02:00","level":"INFO","msg":"stream: closed","id":"lk8utt7j"}

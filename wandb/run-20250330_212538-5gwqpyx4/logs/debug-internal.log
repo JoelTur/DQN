@@ -1,0 +1,7 @@
+{"time":"2025-03-30T21:25:38.763054016+03:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/home/Joel/projects/DQN/wandb/run-20250330_212538-5gwqpyx4/logs/debug-core.log"}
+{"time":"2025-03-30T21:25:38.865512413+03:00","level":"INFO","msg":"created new stream","id":"5gwqpyx4"}
+{"time":"2025-03-30T21:25:38.865562615+03:00","level":"INFO","msg":"stream: started","id":"5gwqpyx4"}
+{"time":"2025-03-30T21:25:38.865587424+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"5gwqpyx4"}
+{"time":"2025-03-30T21:25:38.865635165+03:00","level":"INFO","msg":"handler: started","stream_id":"5gwqpyx4"}
+{"time":"2025-03-30T21:25:38.865610682+03:00","level":"INFO","msg":"sender: started","stream_id":"5gwqpyx4"}
+{"time":"2025-03-30T21:25:39.144534634+03:00","level":"INFO","msg":"Starting system monitor"}

@@ -25,7 +25,7 @@ def getFrame(x: np.ndarray, game_name: str = None) -> np.ndarray:
     """
     # Define crop regions for different games
     crop_regions = {
-        "BreakoutDeterministic-v4": (25, 200, 5, 155),
+        "BreakoutNoFrameskip-v4": (25, 200, 5, 155),
         "PongDeterministic-v4": (35, 210, 0, 160),
         "SpaceInvadersDeterministic-v4": (30, 200, 0, 160),
         "RobotankDeterministic-v4": (75, 170, 10, 160),
@@ -38,7 +38,7 @@ def getFrame(x: np.ndarray, game_name: str = None) -> np.ndarray:
     if game_name and game_name in crop_regions:
         top, bottom, left, right = crop_regions[game_name]
         x = x[top:bottom, left:right]
-    
+
     # Convert to grayscale
     if len(x.shape) == 3:
         state = skimage.color.rgb2gray(x)

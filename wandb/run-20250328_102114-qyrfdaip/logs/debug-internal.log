@@ -1,0 +1,10 @@
+{"time":"2025-03-28T10:21:14.144490219+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/home/Joel/projects/DQN/wandb/run-20250328_102114-qyrfdaip/logs/debug-core.log"}
+{"time":"2025-03-28T10:21:14.247507771+02:00","level":"INFO","msg":"created new stream","id":"qyrfdaip"}
+{"time":"2025-03-28T10:21:14.247540084+02:00","level":"INFO","msg":"stream: started","id":"qyrfdaip"}
+{"time":"2025-03-28T10:21:14.247553564+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"qyrfdaip"}
+{"time":"2025-03-28T10:21:14.247553561+02:00","level":"INFO","msg":"handler: started","stream_id":"qyrfdaip"}
+{"time":"2025-03-28T10:21:14.247562314+02:00","level":"INFO","msg":"sender: started","stream_id":"qyrfdaip"}
+{"time":"2025-03-28T10:21:15.05390182+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-03-28T11:54:44.276873828+02:00","level":"INFO","msg":"stream: closing","id":"qyrfdaip"}
+{"time":"2025-03-28T11:54:44.27690235+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-03-28T11:54:44.277281184+02:00","level":"INFO","msg":"Stopped system monitor"}

@@ -97,7 +97,7 @@ def train(config_name: str = "default"):
     avgrewards = []
     loss = []
     episode_times = []
-    actions = []
+
 
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
@@ -116,7 +116,7 @@ def train(config_name: str = "default"):
         cumureward = 0
         lives = cfg.LIVES
         state.clear()
-        actions_noop = []
+
 
                 # Pre-allocate state buffer
         for _ in range(4):
@@ -128,17 +128,20 @@ def train(config_name: str = "default"):
             with torch.no_grad():
                 action = agent.getPrediction(makeState(state)/255, y)
             
+
             # Batch frame repeats for efficiency
+            frame_reward = 0
             for _ in range(cfg.FRAME_REPEAT):
                 obs, reward, terminated, truncated, info = env.step(action)
-                done = terminated or truncated or info["lives"] != 5
-                if done or reward == 1:
+                frame_reward += reward
+                done = terminated or truncated
+                if done:
                     break
             
             # Process frame and update state efficiently
             cache = state.copy()
             state.append(getFrame(obs, cfg.GAME_NAME))
-            agent.update_replay_memory((makeState(cache), action, clip_reward(reward), makeState(state), done))
+            agent.update_replay_memory((makeState(cache), action, clip_reward(frame_reward), makeState(state), done))
             
             # Train with mixed precision
             if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TRAINING_FREQUENCY == 0:
@@ -151,7 +154,7 @@ def train(config_name: str = "default"):
                 logger.info("Target network updated")
             
             timestep += 1
-            cumureward += reward
+            cumureward += frame_reward
             if timestep >= cfg.START_TRAINING_AT_STEP:
                 agent.reduce_epsilon()
             # Save model periodically
@@ -166,8 +169,8 @@ def train(config_name: str = "default"):
         episode_times.append(episode_time)
         rewards.append(cumureward)
         avgrewards.append(np.mean(rewards[-100:]))
-        actions.append(action)
-        actions_noop.append(action)
+        
+
         
         # Log metrics
         metrics = {
@@ -199,7 +202,6 @@ def train(config_name: str = "default"):
             f"Avg Reward: {avgrewards[-1]:.2f} | "
             f"Epsilon: {agent.EPSILON:.4f} | "
             f"Time: {episode_time:.2f}s | "
-            f"Actions: {Counter(actions)}"
         )
     
     # Close environment

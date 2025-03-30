@@ -186,7 +186,10 @@ def train(config_name: str = "default"):
         
         # Log to wandb if enabled
         if cfg.USE_WANDB:
-            wandb.log(metrics)
+            try:
+                wandb.log(metrics)
+            except Exception as e:
+                logger.error(f"Error logging to wandb: {e}")
         
         # Log episode summary
         logger.info(

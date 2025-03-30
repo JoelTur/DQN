@@ -8,7 +8,7 @@ from collections import deque
 import os
 from typing import List, Tuple, Optional
 import time
-from torch.cuda.amp import autocast, GradScaler
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
@@ -71,7 +71,7 @@ class DQN(nn.Module):
         else:
             self.replay_memory = deque(maxlen=replay_memory_size)
             
-        self.ddqn = True
+        self.ddqn = False
         self.REPLAY_MEMORY_SIZE = replay_memory_size
         self.BATCH_SIZE = batch_size
         self.GAMMA = gamma
@@ -80,7 +80,7 @@ class DQN(nn.Module):
         self.EPSILON_DECAY = epsilon_decay
         self.last_save_time = 0
         self.save_interval = 300
-        self.scaler = GradScaler()  # For mixed precision training
+
 
     def update_replay_memory(self, transition: Tuple):
         if self.use_prioritized_replay:
@@ -114,38 +114,42 @@ class DQN(nn.Module):
             rewards[i] = reward
             dones[i] = done
 
-        # Optimize the model
-        optimizer.zero_grad()
 
         # Use mixed precision training
         
-        with autocast():
-            # Get current Q values
-            current_q_values = agent(states)
-            current_q_values = current_q_values.gather(1, actions.unsqueeze(1)).squeeze()
 
-            # Get next Q values from target network
+        # Get current Q values
+        current_q_values = agent(states)
+        current_q_values = current_q_values.gather(1, actions.unsqueeze(1)).squeeze()
 
-            with torch.no_grad():
+
+
+        # Get next Q values from target network
+         
+        with torch.no_grad():
+            if self.ddqn:
+                next_actions = agent(next_states).max(1)[1]
                 next_q_values = target(next_states)
-                if self.ddqn:
-                    next_actions = agent(next_states).max(1)[1]
-                    next_q_values = next_q_values.gather(1, next_actions.unsqueeze(1)).squeeze()
-                else:
-                    next_q_values = next_q_values.max(1)[0]
+                next_q_values = next_q_values.gather(1, next_actions.unsqueeze(1)).squeeze()
+            else:
+                next_q_values = target(next_states)
+                next_q_values = next_q_values.max(1)[0]
 
-                target_q_values = rewards + (1 - dones) * self.GAMMA * next_q_values
-
-            # Compute loss
-            loss = (weights * loss_fn(current_q_values, target_q_values)).mean()
-
+            target_q_values = rewards + (1 - dones.float()) * self.GAMMA * next_q_values
+    
+        # Compute loss
+        loss = (weights * loss_fn(current_q_values, target_q_values)).mean()
+        
+        # Optimize the model
+        optimizer.zero_grad()
 
         # Backward pass with scaling and clipping
-        self.scaler.scale(loss).backward()
-        self.scaler.unscale_(optimizer)  # Critical for correct clipping
-        torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=1.0)
-        self.scaler.step(optimizer)
-        self.scaler.update()
+        loss.backward()
+
+        for param in agent.parameters():
+            param.grad = torch.clamp(param.grad, -1, 1)
+        optimizer.step()
+        
 
         # Update priorities if using prioritized replay
         if self.use_prioritized_replay:
@@ -153,8 +157,10 @@ class DQN(nn.Module):
                 errors = torch.abs(current_q_values - target_q_values).cpu().numpy()
                 self.replay_memory.update_priorities(indices, errors)
 
-        self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-1/self.EPSILON_DECAY)
         return loss.item()
+    
+    def reduce_epsilon(self):
+        self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-1/self.EPSILON_DECAY)
 
     def getPrediction(self, state, model):
         if np.random.rand() > self.EPSILON:

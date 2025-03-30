@@ -5,25 +5,25 @@ from typing import Optional
 class TrainingConfig:
     # Training parameters
     EPISODES: int = 500000
-    START_TRAINING_AT_STEP: int = 50000
+    START_TRAINING_AT_STEP: int = 100000
     TRAINING_FREQUENCY: int = 4
     TARGET_NET_UPDATE_FREQUENCY: int = 10000
     
     # Model parameters
-    LEARNING_RATE: float = 0.00025
+    LEARNING_RATE: float = 0.0001
     GAMMA: float = 0.99
     
     # Replay memory parameters
-    REPLAY_MEMORY_SIZE: int = 2*10**5
+    REPLAY_MEMORY_SIZE: int = 10**6
     BATCH_SIZE: int = 32
     
     # Exploration parameters
     EPSILON: float = 1
-    EPSILON_MIN: float = 0.1
-    EPSILON_DECAY: float = 2*10**5
+    EPSILON_MIN: float = 0.01
+    EPSILON_DECAY: float = 10**6
     
     # Environment parameters
-    FRAME_REPEAT: int = 1  # Number of times to repeat each action (4 for FlappyBird/Doom, 1 for Atari)
+    FRAME_REPEAT: int = 4  # Number of times to repeat each action (4 for FlappyBird/Doom, 1 for Atari)
     
     # Save frequency
     SAVE_FREQUENCY: int = 10000  # Save model every N frames
@@ -33,7 +33,7 @@ class TrainingConfig:
     LIVES: int = 0  # Number of lives (5 for Breakout, 3 for SpaceInvaders, 0 for Pong, 3 for Robotank)
     
     # Optional settings
-    USE_PRETRAINED: bool = True
+    USE_PRETRAINED: bool = False
     PRETRAINED_MODEL_PATH: Optional[str] = f"models/"
     
     # Weights & Biases settings
@@ -50,7 +50,7 @@ default_config = TrainingConfig()
 
 # Game-specific configurations
 breakout_config = TrainingConfig(
-    GAME_NAME="BreakoutDeterministic-v4",
+    GAME_NAME="BreakoutNoFrameskip-v4",
     LIVES=5,
     FRAME_REPEAT=1
 )

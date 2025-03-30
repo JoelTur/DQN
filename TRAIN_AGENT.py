@@ -3,7 +3,7 @@ from torch import nn
 from torch._C import device
 from torch import optim
 import numpy as np
-from collections import deque
+from collections import deque, Counter
 import gymnasium as gym
 import ale_py
 gym.register_envs(ale_py)
@@ -17,7 +17,7 @@ from datetime import datetime
 import logging
 import torch.backends.cudnn as cudnn
 from torch.cuda.amp import autocast
-
+import random
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -72,7 +72,7 @@ def train(config_name: str = "default"):
     
     # Initialize training components
     loss_fn = nn.HuberLoss()
-    optimizer = optim.Adam(y.parameters(), lr=cfg.LEARNING_RATE)
+    optimizer = optim.Adam(y.parameters(), lr=cfg.LEARNING_RATE, eps=1e-3)
     agent = DQN.DQN(
         replay_memory_size=cfg.REPLAY_MEMORY_SIZE,
         batch_size=cfg.BATCH_SIZE,
@@ -91,12 +91,14 @@ def train(config_name: str = "default"):
         agent.loadModel(y, cfg.PRETRAINED_MODEL_PATH + f"{cfg.GAME_NAME}.pth")
     
     # Initialize metrics
-    frames_seen = 0
+    timestep = 0
+    param_updates = 0
     rewards = []
     avgrewards = []
     loss = []
     episode_times = []
-    
+    actions = []
+
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
         from wandb import wandb
@@ -114,47 +116,48 @@ def train(config_name: str = "default"):
         cumureward = 0
         lives = cfg.LIVES
         state.clear()
-        
-        # Pre-allocate state buffer
+        actions_noop = []
+
+                # Pre-allocate state buffer
         for _ in range(4):
-            state.append(getFrame(obs))
+            state.append(getFrame(obs, cfg.GAME_NAME))
         
         while True:
             # Use torch.no_grad() for inference
+
             with torch.no_grad():
                 action = agent.getPrediction(makeState(state)/255, y)
             
             # Batch frame repeats for efficiency
             for _ in range(cfg.FRAME_REPEAT):
                 obs, reward, terminated, truncated, info = env.step(action)
-                done = terminated or truncated
+                done = terminated or truncated or info["lives"] != 5
                 if done or reward == 1:
                     break
             
             # Process frame and update state efficiently
             cache = state.copy()
-            state.append(getFrame(obs))
+            state.append(getFrame(obs, cfg.GAME_NAME))
             agent.update_replay_memory((makeState(cache), action, clip_reward(reward), makeState(state), done))
             
             # Train with mixed precision
-            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and frames_seen % cfg.TRAINING_FREQUENCY == 0:
-
-                with autocast():
-                    loss_value = agent.train(y, target_y, loss_fn, optimizer)
-                    loss.append(loss_value)
+            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TRAINING_FREQUENCY == 0:
+                loss_value = agent.train(y, target_y, loss_fn, optimizer)
+                loss.append(loss_value)
             
             # Update target network
-            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and frames_seen % cfg.TARGET_NET_UPDATE_FREQUENCY == 0:
+            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TARGET_NET_UPDATE_FREQUENCY == 0:
                 target_y.load_state_dict(y.state_dict())
                 logger.info("Target network updated")
             
-            frames_seen += 1
+            timestep += 1
             cumureward += reward
-            
+            if timestep >= cfg.START_TRAINING_AT_STEP:
+                agent.reduce_epsilon()
             # Save model periodically
-            if frames_seen % cfg.SAVE_FREQUENCY == 0:
+            if timestep % cfg.SAVE_FREQUENCY == 0:
                 agent.saveModel(y, cfg.PRETRAINED_MODEL_PATH + f"{cfg.GAME_NAME}.pth")
-            
+
             if done:
                 break
         
@@ -163,6 +166,8 @@ def train(config_name: str = "default"):
         episode_times.append(episode_time)
         rewards.append(cumureward)
         avgrewards.append(np.mean(rewards[-100:]))
+        actions.append(action)
+        actions_noop.append(action)
         
         # Log metrics
         metrics = {
@@ -171,12 +176,12 @@ def train(config_name: str = "default"):
             "Episode time": episode_time,
             "Average episode time": np.mean(episode_times[-100:]),
             "Epsilon": agent.EPSILON,
-            "Frames seen": frames_seen,
+            "Timestep": timestep,
             "Replay memory size": len(agent.replay_memory)
         }
         
         if loss:
-            metrics["Loss"] = np.mean(loss)
+            metrics["Loss"] = loss[-1]
             loss = []
         
         # Log to wandb if enabled
@@ -185,12 +190,13 @@ def train(config_name: str = "default"):
         
         # Log episode summary
         logger.info(
-            f"Frames_seen {frames_seen}| "
+            f"Timestep {timestep}| "
             f"Episode {episode}/{cfg.EPISODES} | "
             f"Score: {cumureward:.2f} | "
             f"Avg Reward: {avgrewards[-1]:.2f} | "
             f"Epsilon: {agent.EPSILON:.4f} | "
-            f"Time: {episode_time:.2f}s"
+            f"Time: {episode_time:.2f}s | "
+            f"Actions: {Counter(actions)}"
         )
     
     # Close environment

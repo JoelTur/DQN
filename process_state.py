@@ -25,7 +25,7 @@ def getFrame(x: np.ndarray, game_name: str = None) -> np.ndarray:
     """
     # Define crop regions for different games
     crop_regions = {
-        "BreakoutDeterministic-v4": (35, 210, 0, 160),
+        "BreakoutDeterministic-v4": (25, 200, 5, 155),
         "PongDeterministic-v4": (35, 210, 0, 160),
         "SpaceInvadersDeterministic-v4": (30, 200, 0, 160),
         "RobotankDeterministic-v4": (75, 170, 10, 160),
@@ -46,12 +46,12 @@ def getFrame(x: np.ndarray, game_name: str = None) -> np.ndarray:
         state = x
     
     # Resize to standard size
-    state = skimage.transform.resize(state, (84, 84), preserve_range=True)
+    state = skimage.transform.resize(state, (84, 84), preserve_range=True, order = 0, anti_aliasing=False)
     
     # Normalize to [0, 255]
     state = skimage.exposure.rescale_intensity(state, out_range=(0, 255))
     state = state.astype('uint8')
-    
+
     return state
 
 def makeState(state: List[np.ndarray]) -> np.ndarray:
@@ -64,45 +64,6 @@ def makeState(state: List[np.ndarray]) -> np.ndarray:
     Returns:
         Stacked frames as a numpy array
     """
-    return np.stack(state, axis=0)
+    r = np.stack(state, axis=0)
 
-def preprocess_frame(frame: np.ndarray, game_name: str = None) -> np.ndarray:
-    """
-    Additional preprocessing steps for frames.
-    
-    Args:
-        frame: Raw frame from the environment
-        game_name: Name of the game for game-specific preprocessing
-        
-    Returns:
-        Preprocessed frame
-    """
-    # Apply game-specific preprocessing
-    if game_name == "SpaceInvadersDeterministic-v4":
-        # Remove score display
-        frame[0:30, :] = 0
-    elif game_name == "BreakoutDeterministic-v4":
-        # Remove score and lives display
-        frame[0:30, :] = 0
-    elif game_name in ["VizdoomDefendCenter-v0", "VizdoomDeathmatch-v0"]:
-        # Apply contrast enhancement for better visibility
-        frame = skimage.exposure.adjust_gamma(frame, gamma=0.8)
-    
-    return frame
-
-def getFrameWithPreprocessing(x: np.ndarray, game_name: str = None) -> np.ndarray:
-    """
-    Complete frame processing pipeline including preprocessing.
-    
-    Args:
-        x: Raw frame from the environment
-        game_name: Name of the game
-        
-    Returns:
-        Fully processed frame
-    """
-    # Apply preprocessing
-    x = preprocess_frame(x, game_name)
-    
-    # Get processed frame
-    return getFrame(x, game_name)
+    return r

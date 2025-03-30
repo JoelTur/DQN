@@ -1,7 +1,0 @@
-{"time":"2025-03-30T23:56:22.470856627+03:00","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/home/Joel/projects/DQN/wandb/run-20250330_235622-z46uzify/logs/debug-core.log"}
-{"time":"2025-03-30T23:56:22.573283529+03:00","level":"INFO","msg":"created new stream","id":"z46uzify"}
-{"time":"2025-03-30T23:56:22.573318852+03:00","level":"INFO","msg":"stream: started","id":"z46uzify"}
-{"time":"2025-03-30T23:56:22.573351555+03:00","level":"INFO","msg":"sender: started","stream_id":"z46uzify"}
-{"time":"2025-03-30T23:56:22.573354415+03:00","level":"INFO","msg":"handler: started","stream_id":"z46uzify"}
-{"time":"2025-03-30T23:56:22.573452212+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"z46uzify"}
-{"time":"2025-03-30T23:56:22.845071194+03:00","level":"INFO","msg":"Starting system monitor"}

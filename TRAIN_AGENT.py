@@ -73,6 +73,7 @@ def train(config_name: str = "default"):
     # Initialize training components
     loss_fn = nn.HuberLoss()
     optimizer = optim.Adam(y.parameters(), lr=cfg.LEARNING_RATE, eps=1e-3)
+
     agent = DQN.DQN(
         replay_memory_size=cfg.REPLAY_MEMORY_SIZE,
         batch_size=cfg.BATCH_SIZE,

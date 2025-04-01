@@ -22,7 +22,7 @@ class NeuralNetwork(nn.Module):
 
         self.fc1 = nn.Linear(3136, 512)
         torch.nn.init.kaiming_normal_(self.fc1.weight)
-        self.dropout = nn.Dropout(0.2)
+
         self.fc2 = nn.Linear(512, self.actionSpaceSize)
         torch.nn.init.kaiming_normal_(self.fc2.weight)
 

@@ -7,10 +7,10 @@ class TrainingConfig:
     EPISODES: int = 500000
     START_TRAINING_AT_STEP: int = 100000
     TRAINING_FREQUENCY: int = 4
-    TARGET_NET_UPDATE_FREQUENCY: int = 2000
+    TARGET_NET_UPDATE_FREQUENCY: int = 10000
     
     # Model parameters
-    LEARNING_RATE: float = 0.00025
+    LEARNING_RATE: float = 0.0001
     GAMMA: float = 0.99
     
     # Replay memory parameters
@@ -18,8 +18,8 @@ class TrainingConfig:
     BATCH_SIZE: int = 32
     
     # Exploration parameters
-    EPSILON: float = 0.1
-    EPSILON_MIN: float = 0.05
+    EPSILON: float = 1
+    EPSILON_MIN: float = 0.1
     EPSILON_DECAY: float = 10**6
     
     # Environment parameters
@@ -33,7 +33,7 @@ class TrainingConfig:
     LIVES: int = 0  # Number of lives (5 for Breakout, 3 for SpaceInvaders, 0 for Pong, 3 for Robotank)
     
     # Optional settings
-    USE_PRETRAINED: bool = True
+    USE_PRETRAINED: bool = False
     PRETRAINED_MODEL_PATH: Optional[str] = f"models/"
     
     # Weights & Biases settings

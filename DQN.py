@@ -13,63 +13,51 @@ import time
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
-class PrioritizedReplayBuffer:
-    def __init__(self, capacity: int, alpha: float = 0.6, beta: float = 0.4):
+
+class ReplayBuffer:
+    def __init__(self, capacity: int):
         self.capacity = capacity
-        self.alpha = alpha
-        self.beta = beta
-        self.beta_increment = 0.001
-        self.memory = []
-        self.priorities = np.zeros(capacity)
         self.position = 0
-        self.size = 0
+        self.full = False
+        self.observations = np.zeros((capacity, 4, 84, 84), dtype=np.uint8)
+        self.actions = np.zeros((capacity), dtype=np.float32)
+        self.rewards = np.zeros((capacity), dtype=np.float32)
+        self.dones = np.zeros((capacity), dtype=np.bool)
 
-    def push(self, transition: Tuple, error: float = None):
-        if error is None:
-            error = np.max(self.priorities) if self.size > 0 else 1.0
-
-        if self.size < self.capacity:
-            self.memory.append(transition)
-            self.size += 1
+    def size(self):
+        if self.full:
+            return self.capacity
         else:
-            self.memory[self.position] = transition
+            return self.position
 
-        self.priorities[self.position] = error ** self.alpha
-        self.position = (self.position + 1) % self.capacity
+            
 
-    def sample(self, batch_size: int) -> Tuple[List, np.ndarray, np.ndarray]:
-        if self.size < self.capacity:
-            probs = self.priorities[:self.size]
+    def push(self, observation: np.ndarray, next_observation: np.ndarray, action: int, reward: float, done: bool):
+        self.observations[self.position] = np.array(observation).copy()
+        if not done:
+            self.observations[(self.position + 1) % self.capacity] = np.array(next_observation).copy()
+        self.actions[self.position] = action
+        self.rewards[self.position] = reward
+        self.dones[self.position] = done
+        self.position += 1
+        if self.position == self.capacity:
+            self.full = True
+            self.position = 0
+
+    def sample(self, batch_size: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        if self.full:
+            indices = (np.random.randint(1, self.capacity, size = batch_size) + self.position) % self.capacity
         else:
-            probs = self.priorities
+            indices = np.random.randint(0, self.position, size = batch_size)
+        return self.observations[indices], self.observations[(indices + 1) % self.capacity], self.actions[indices], self.rewards[indices], self.dones[indices]
 
-        probs = probs / np.sum(probs)
-        indices = np.random.choice(self.size, batch_size, p=probs)
-        samples = [self.memory[idx] for idx in indices]
-
-        self.beta = min(1.0, self.beta + self.beta_increment)
-        weights = (self.size * probs[indices]) ** (-self.beta)
-        weights = weights / np.max(weights)
-
-        return samples, indices, weights
-
-    def update_priorities(self, indices: np.ndarray, errors: np.ndarray):
-        for idx, error in zip(indices, errors):
-            self.priorities[idx] = error ** self.alpha
-
-    def __len__(self) -> int:
-        return self.size
 
 class DQN(nn.Module):
     def __init__(self, replay_memory_size: int = 2*10**5, batch_size: int = 32, 
                  gamma: float = 0.99, epsilon: float = 1, epsilon_min: float = 0.1, 
-                 epsilon_decay: int = 10**6, use_prioritized_replay: bool = False):
+                 epsilon_decay: int = 10**6):
         super(DQN, self).__init__()
-        self.use_prioritized_replay = use_prioritized_replay
-        if use_prioritized_replay:
-            self.replay_memory = PrioritizedReplayBuffer(replay_memory_size)
-        else:
-            self.replay_memory = deque(maxlen=replay_memory_size)
+        self.replay_memory = ReplayBuffer(replay_memory_size)
             
         self.ddqn = False
         self.REPLAY_MEMORY_SIZE = replay_memory_size
@@ -82,37 +70,21 @@ class DQN(nn.Module):
         self.save_interval = 300
 
 
-    def update_replay_memory(self, transition: Tuple):
-        if self.use_prioritized_replay:
-            self.replay_memory.push(transition)
-        else:
-            self.replay_memory.append(transition)
+    def update_replay_memory(self, observation: np.ndarray, next_observation: np.ndarray, action: int, reward: float, done: bool):
+        self.replay_memory.push(observation, next_observation, action, reward, done)
 
     def train(self, agent, target, loss_fn, optimizer):
-        if len(self.replay_memory) < self.BATCH_SIZE:
-            return 0
 
-        if self.use_prioritized_replay:
-            batch, indices, weights = self.replay_memory.sample(self.BATCH_SIZE)
-            weights = torch.FloatTensor(weights).to(device)
-        else:
-            batch = random.sample(self.replay_memory, self.BATCH_SIZE)
-            weights = torch.ones(self.BATCH_SIZE).to(device)
 
-        # Pre-allocate tensors for better performance
-        states = torch.zeros((self.BATCH_SIZE, 4, 84, 84), dtype=torch.float32, device=device)
-        next_states = torch.zeros((self.BATCH_SIZE, 4, 84, 84), dtype=torch.float32, device=device)
-        actions = torch.zeros(self.BATCH_SIZE, dtype=torch.long, device=device)
-        rewards = torch.zeros(self.BATCH_SIZE, dtype=torch.float32, device=device)
-        dones = torch.zeros(self.BATCH_SIZE, dtype=torch.float32, device=device)
 
-        # Batch process transitions
-        for i, (state, action, reward, next_state, done) in enumerate(batch):
-            states[i] = torch.from_numpy(state/255).float()
-            next_states[i] = torch.from_numpy(next_state/255).float()
-            actions[i] = action
-            rewards[i] = reward
-            dones[i] = done
+        observations, next_observations, actions, rewards, dones = self.replay_memory.sample(self.BATCH_SIZE)
+
+
+        states = torch.from_numpy(observations).float().to(device)
+        next_states = torch.from_numpy(next_observations).float().to(device)
+        actions = torch.from_numpy(actions).long().to(device)
+        rewards = torch.from_numpy(rewards).float().to(device)
+        dones = torch.from_numpy(dones).float().to(device)
 
 
         # Use mixed precision training
@@ -138,7 +110,7 @@ class DQN(nn.Module):
             target_q_values = rewards + (1 - dones.float()) * self.GAMMA * next_q_values
     
         # Compute loss
-        loss = (weights * loss_fn(current_q_values, target_q_values)).mean()
+        loss = loss_fn(current_q_values, target_q_values).mean()
         
         # Optimize the model
         optimizer.zero_grad()
@@ -151,11 +123,6 @@ class DQN(nn.Module):
         optimizer.step()
         
 
-        # Update priorities if using prioritized replay
-        if self.use_prioritized_replay:
-            with torch.no_grad():
-                errors = torch.abs(current_q_values - target_q_values).cpu().numpy()
-                self.replay_memory.update_priorities(indices, errors)
 
         return loss.item()
     

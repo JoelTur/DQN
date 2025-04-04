@@ -31,7 +31,7 @@ class NeuralNetwork(nn.Module):
     
 
     def forward(self, x):
-        x = x.to(device)
+        x = x.to(device)/255
         
 
         x = self.relu(self.conv1(x))

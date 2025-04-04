@@ -60,9 +60,8 @@ def test(config_name: str = "default", num_games: int = 100):
     state = deque(maxlen=4)
     
     # Initialize metrics
-    rewards = []
-    avgrewards = []
-    episode_times = []
+    rewards = deque(maxlen=100)
+    episode_times = deque(maxlen=100)
     
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
@@ -87,17 +86,19 @@ def test(config_name: str = "default", num_games: int = 100):
             state.append(getFrame(obs))
         
         while True:
-            action = agent.getPrediction(makeState(state)/255, y)
+            action = agent.getPrediction(makeState(state), y)
             
+            frame_reward = 0
             # Repeat action based on configuration
             for _ in range(cfg.FRAME_REPEAT):
                 obs, reward, terminated, truncated, info = env.step(action)  # New Gymnasium API
                 done = terminated or truncated
-                if done or reward == 1:
+                frame_reward += reward
+                if done:
                     break
             
             state.append(getFrame(obs))
-            score += reward
+            score += frame_reward
             env.render()
             
             if done and lives == 0:
@@ -107,14 +108,14 @@ def test(config_name: str = "default", num_games: int = 100):
         episode_time = time.time() - episode_start_time
         episode_times.append(episode_time)
         rewards.append(score)
-        avgrewards.append(np.mean(rewards[-100:]))  # Last 100 episodes average
+ # Last 100 episodes average
         
         # Log metrics
         metrics = {
             "Score": score,
-            "Average score (last 100)": avgrewards[-1],
+            "Average score (last 100)": np.mean(rewards),
             "Episode time": episode_time,
-            "Average episode time": np.mean(episode_times[-100:]),
+            "Average episode time": np.mean(episode_times),
             "Game": game
         }
         

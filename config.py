@@ -5,7 +5,7 @@ from typing import Optional
 class TrainingConfig:
     # Training parameters
     EPISODES: int = 500000
-    START_TRAINING_AT_STEP: int = 100000
+    START_TRAINING_AT_STEP: int = 10**5
     TRAINING_FREQUENCY: int = 4
     TARGET_NET_UPDATE_FREQUENCY: int = 10000
     
@@ -14,12 +14,12 @@ class TrainingConfig:
     GAMMA: float = 0.99
     
     # Replay memory parameters
-    REPLAY_MEMORY_SIZE: int = 4*10**5
+    REPLAY_MEMORY_SIZE: int = 5*10**5
     BATCH_SIZE: int = 32
     
     # Exploration parameters
     EPSILON: float = 1
-    EPSILON_MIN: float = 0.1
+    EPSILON_MIN: float = 0.05
     EPSILON_DECAY: float = 10**6
     
     # Environment parameters

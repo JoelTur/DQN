@@ -94,10 +94,9 @@ def train(config_name: str = "default"):
     # Initialize metrics
     timestep = 0
     param_updates = 0
-    rewards = []
-    avgrewards = []
+    rewards = deque(maxlen=100)
     loss = []
-    episode_times = []
+    episode_times = deque(maxlen=100)
 
 
     # Initialize wandb if enabled
@@ -118,6 +117,9 @@ def train(config_name: str = "default"):
         lives = cfg.LIVES
         state.clear()
 
+        # Randomly choose 2-3 actions to take before training
+        #for i in range(np.random.randint(0, 30)):
+        #    obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
 
                 # Pre-allocate state buffer
         for _ in range(4):
@@ -127,7 +129,7 @@ def train(config_name: str = "default"):
             # Use torch.no_grad() for inference
 
             with torch.no_grad():
-                action = agent.getPrediction(makeState(state)/255, y)
+                action = agent.getPrediction(makeState(state), y)
             
 
             # Batch frame repeats for efficiency
@@ -142,15 +144,15 @@ def train(config_name: str = "default"):
             # Process frame and update state efficiently
             cache = state.copy()
             state.append(getFrame(obs, cfg.GAME_NAME))
-            agent.update_replay_memory((makeState(cache), action, clip_reward(frame_reward), makeState(state), done))
+            agent.update_replay_memory(makeState(cache), makeState(state), action, clip_reward(frame_reward), done)
             
             # Train with mixed precision
-            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TRAINING_FREQUENCY == 0:
+            if agent.replay_memory.size() >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TRAINING_FREQUENCY == 0:
                 loss_value = agent.train(y, target_y, loss_fn, optimizer)
                 loss.append(loss_value)
             
             # Update target network
-            if len(agent.replay_memory) >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TARGET_NET_UPDATE_FREQUENCY == 0:
+            if agent.replay_memory.size() >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TARGET_NET_UPDATE_FREQUENCY == 0:
                 target_y.load_state_dict(y.state_dict())
                 logger.info("Target network updated")
             
@@ -169,19 +171,18 @@ def train(config_name: str = "default"):
         episode_time = time.time() - episode_start_time
         episode_times.append(episode_time)
         rewards.append(cumureward)
-        avgrewards.append(np.mean(rewards[-100:]))
         
 
         
         # Log metrics
         metrics = {
             "Reward per episode": cumureward,
-            "Average reward (last 100)": avgrewards[-1],
+            "Average reward (last 100)": np.mean(rewards),
             "Episode time": episode_time,
-            "Average episode time": np.mean(episode_times[-100:]),
+            "Average episode time (last 100)": np.mean(episode_times),
             "Epsilon": agent.EPSILON,
             "Timestep": timestep,
-            "Replay memory size": len(agent.replay_memory)
+            "Replay memory size": agent.replay_memory.size()
         }
         
         if loss:
@@ -200,7 +201,7 @@ def train(config_name: str = "default"):
             f"Timestep {timestep}| "
             f"Episode {episode}/{cfg.EPISODES} | "
             f"Score: {cumureward:.2f} | "
-            f"Avg Reward: {avgrewards[-1]:.2f} | "
+            f"Avg Reward: {np.mean(rewards):.2f} | "
             f"Epsilon: {agent.EPSILON:.4f} | "
             f"Time: {episode_time:.2f}s | "
         )

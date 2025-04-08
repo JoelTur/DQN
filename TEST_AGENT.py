@@ -48,12 +48,12 @@ def test(config_name: str = "default", num_games: int = 100):
         gamma=cfg.GAMMA,
         epsilon=0,  # No exploration during testing
         epsilon_min=0,
-        epsilon_decay=cfg.EPSILON_DECAY
+        epsilon_decay=0
     )
     
     # Load the model
     model_path = os.path.join('models', f"{cfg.GAME_NAME}.pth")
-    agent.loadModel(y, model_path)
+    agent.loadModel(y, cfg.PRETRAINED_MODEL_PATH + f"{cfg.GAME_NAME}.pth")
 
     
     # Initialize state buffer
@@ -81,13 +81,16 @@ def test(config_name: str = "default", num_games: int = 100):
         lives = cfg.LIVES
         state.clear()
         
-        # Initialize state buffer
-        for _ in range(4):
-            state.append(getFrame(obs))
+
+        for i in range(np.random.randint(0, 30)):
+            obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
+
+        for i in range(4):
+            state.append(getFrame(obs, cfg.GAME_NAME))
         
         while True:
             action = agent.getPrediction(makeState(state), y)
-            
+
             frame_reward = 0
             # Repeat action based on configuration
             for _ in range(cfg.FRAME_REPEAT):
@@ -97,11 +100,11 @@ def test(config_name: str = "default", num_games: int = 100):
                 if done:
                     break
             
-            state.append(getFrame(obs))
+            state.append(getFrame(obs, cfg.GAME_NAME))
             score += frame_reward
             env.render()
             
-            if done and lives == 0:
+            if done:
                 break
         
         # Calculate episode metrics
@@ -127,7 +130,7 @@ def test(config_name: str = "default", num_games: int = 100):
         logger.info(
             f"Game {game}/{num_games} | "
             f"Score: {score:.2f} | "
-            f"Avg Score: {avgrewards[-1]:.2f} | "
+            f"Avg Score: {np.mean(rewards):.2f} | "
             f"Time: {episode_time:.2f}s"
         )
     

@@ -97,7 +97,8 @@ def train(config_name: str = "default"):
     rewards = deque(maxlen=100)
     loss = []
     episode_times = deque(maxlen=100)
-
+    batch_Q_values_max = None
+    batch_Q_values_mean = None
 
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
@@ -148,9 +149,12 @@ def train(config_name: str = "default"):
             
             # Train with mixed precision
             if agent.replay_memory.size() >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TRAINING_FREQUENCY == 0:
-                loss_value = agent.train(y, target_y, loss_fn, optimizer)
+                loss_value, batch_Q_values_max, batch_Q_values_mean = agent.train(y, target_y, loss_fn, optimizer)
                 loss.append(loss_value)
+                batch_Q_values_max = batch_Q_values_max
+                batch_Q_values_mean = batch_Q_values_mean
             
+
             # Update target network
             if agent.replay_memory.size() >= cfg.START_TRAINING_AT_STEP and timestep % cfg.TARGET_NET_UPDATE_FREQUENCY == 0:
                 target_y.load_state_dict(y.state_dict())
@@ -172,7 +176,11 @@ def train(config_name: str = "default"):
         episode_times.append(episode_time)
         rewards.append(cumureward)
         
-
+        grad_norms = []
+        if y.parameters() is not None:
+            for p in y.parameters():
+                if p.grad is not None:
+                    grad_norms.append(p.grad.norm().item())
         
         # Log metrics
         metrics = {
@@ -182,7 +190,10 @@ def train(config_name: str = "default"):
             "Average episode time (last 100)": np.mean(episode_times),
             "Epsilon": agent.EPSILON,
             "Timestep": timestep,
-            "Replay memory size": agent.replay_memory.size()
+            "Replay memory size": agent.replay_memory.size(),
+            "Gradient norms": np.mean(grad_norms),
+            "Batch Q values max": batch_Q_values_max,
+            "Batch Q values mean": batch_Q_values_mean
         }
         
         if loss:
@@ -204,7 +215,9 @@ def train(config_name: str = "default"):
             f"Avg Reward: {np.mean(rewards):.2f} | "
             f"Epsilon: {agent.EPSILON:.4f} | "
             f"Time: {episode_time:.2f}s | "
-        )
+            f"Grad Norms: {np.mean(grad_norms):.2f} | "
+            f"Batch Q values max: {batch_Q_values_max} | "
+            f"Batch Q values mean: {batch_Q_values_mean}")
     
     # Close environment
     env.close()

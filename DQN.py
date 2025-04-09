@@ -124,7 +124,7 @@ class DQN(nn.Module):
         
 
 
-        return loss.item()
+        return loss.item(), current_q_values.max().item(), current_q_values.mean().item()
     
     def reduce_epsilon(self):
         self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-1/self.EPSILON_DECAY)

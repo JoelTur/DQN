@@ -140,7 +140,7 @@ def train(config_name: str = "default"):
     episode_times = deque(maxlen=100)
     batch_Q_values_max = None
     batch_Q_values_mean = None
-    best_evaluation_score = 268
+    best_evaluation_score = 0
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
         from wandb import wandb

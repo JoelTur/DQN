@@ -83,13 +83,13 @@ def test(config_name: str = "default", num_games: int = 100):
         
 
         for i in range(np.random.randint(0, 30)):
-            obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
+               obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
 
         for i in range(4):
             state.append(getFrame(obs, cfg.GAME_NAME))
         
         while True:
-            action = agent.getPrediction(makeState(state), y)
+            action = agent.pred(makeState(state), y)
 
             frame_reward = 0
             # Repeat action based on configuration

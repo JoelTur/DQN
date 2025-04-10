@@ -129,13 +129,19 @@ class DQN(nn.Module):
     def reduce_epsilon(self):
         self.EPSILON = max(self.EPSILON_MIN, self.EPSILON-1/self.EPSILON_DECAY)
 
-    def getPrediction(self, state, model):
+    def pred(self, state, model):
+        with torch.no_grad():
+            state = np.expand_dims(state, axis=0)
+            state = torch.from_numpy(state).float().to(device)
+            return torch.argmax(model(state)).item()
+    
+    
+    def epsilon_greedy(self, state, model):
         if np.random.rand() > self.EPSILON:
-            with torch.no_grad():
-                state = np.expand_dims(state, axis=0)
-                state = torch.from_numpy(state).float().to(device)
-                return torch.argmax(model(state)).item()
+            return self.pred(state, model)
         return random.randrange(model.actionSpaceSize)
+    
+
 
     def saveModel(self, agent, filename):
         try:

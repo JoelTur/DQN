@@ -44,6 +44,47 @@ def create_experiment_dir(config_name: str) -> str:
     os.makedirs(experiment_dir, exist_ok=True)
     return experiment_dir
 
+def evaluate_policy(y, agent, episodes, cfg, wandb, experiment_dir):
+    logger.info("Evaluating the policy...")
+    env = gym.make(cfg.GAME_NAME, render_mode="rgb_array")
+
+    total_rewards = []
+    state = deque(maxlen= 4)
+    for epi in range(episodes):
+        obs, _ = env.reset()
+        for i in range(np.random.randint(0, 30)):
+            obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
+        for i in range(4):
+            state.append(getFrame(obs, cfg.GAME_NAME))
+        done = False
+        steps = 0
+        episode_reward = 0
+
+        while not done:
+            with torch.no_grad():
+                action = agent.pred(makeState(state), y)
+
+            frame_reward = 0
+            for _ in range(cfg.FRAME_REPEAT):
+                obs, reward, terminated, truncated, info = env.step(action)  # New Gymnasium API
+                done = terminated or truncated
+                frame_reward += reward
+                if done:
+                    break
+            steps += 1
+            state.append(getFrame(obs, cfg.GAME_NAME))
+            episode_reward += frame_reward
+            if steps > 5000:
+                done = True
+        total_rewards.append(episode_reward)
+        logger.info(f"Episode {(epi+1)}/{episodes} | " f"Steps {steps}/{5000} | " f"Reward {episode_reward} | ")
+    
+    env.close()
+    avg_eval_score = sum(total_rewards) / len(total_rewards)
+    logger.info(f"Done evaluating the policy with avg reward {avg_eval_score}!")
+    wandb.log({"Avg eval Reward": avg_eval_score})
+    return avg_eval_score
+
 def train(config_name: str = "default"):
     # Get configuration
     cfg = getattr(config, f"{config_name}_config", config.default_config)
@@ -58,7 +99,7 @@ def train(config_name: str = "default"):
     if cfg.RECORD_VIDEOS:
         env = gym.wrappers.RecordVideo(
             env,
-            video_folder=f"{experiment_dir}/videos",
+            video_folder=f"{experiment_dir}/videos_train",
             episode_trigger=lambda episode_id: episode_id % cfg.VIDEO_RECORD_FREQUENCY == 0
         )
     logger.info(f"Environment created: {cfg.GAME_NAME}")
@@ -99,7 +140,7 @@ def train(config_name: str = "default"):
     episode_times = deque(maxlen=100)
     batch_Q_values_max = None
     batch_Q_values_mean = None
-
+    best_evaluation_score = 268
     # Initialize wandb if enabled
     if cfg.USE_WANDB:
         from wandb import wandb
@@ -112,6 +153,7 @@ def train(config_name: str = "default"):
     
     # Training loop with optimizations
     for episode in range(1, cfg.EPISODES + 1):
+
         episode_start_time = time.time()
         obs, _ = env.reset()
         cumureward = 0
@@ -119,8 +161,8 @@ def train(config_name: str = "default"):
         state.clear()
 
         # Randomly choose 2-3 actions to take before training
-        #for i in range(np.random.randint(0, 30)):
-        #    obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
+        for i in range(np.random.randint(0, 30)):
+            obs, reward, terminated, truncated, info = env.step(np.random.choice([2,3]))
 
                 # Pre-allocate state buffer
         for _ in range(4):
@@ -130,7 +172,7 @@ def train(config_name: str = "default"):
             # Use torch.no_grad() for inference
 
             with torch.no_grad():
-                action = agent.getPrediction(makeState(state), y)
+                action = agent.epsilon_greedy(makeState(state), y)
             
 
             # Batch frame repeats for efficiency
@@ -165,9 +207,16 @@ def train(config_name: str = "default"):
             if timestep >= cfg.START_TRAINING_AT_STEP:
                 agent.reduce_epsilon()
             # Save model periodically
-            if timestep % cfg.SAVE_FREQUENCY == 0:
-                agent.saveModel(y, cfg.PRETRAINED_MODEL_PATH + f"{cfg.GAME_NAME}.pth")
-
+            if timestep % cfg.EVAL_FREQUENCY == 0 and timestep > 10**5:
+                evaluation_score = evaluate_policy(y, agent, 10, cfg, wandb, experiment_dir) 
+                if evaluation_score > best_evaluation_score:
+                    best_evaluation_score = evaluation_score
+                    agent.saveModel(y, cfg.PRETRAINED_MODEL_PATH + f"{cfg.GAME_NAME}.pth")
+            if timestep == 10**7:
+                prev_lr = optimizer.param_groups[0]['lr']
+                optimizer.param_groups[0]['lr'] = cfg.LEARNING_RATE_PHASE_2
+                cur_lr = optimizer.param_groups[0]['lr']
+                logger.info(f"learning rate reduced from {prev_lr} to {cur_lr}")
             if done:
                 break
         
@@ -212,15 +261,18 @@ def train(config_name: str = "default"):
             f"Timestep {timestep}| "
             f"Episode {episode}/{cfg.EPISODES} | "
             f"Score: {cumureward:.2f} | "
-            f"Avg Reward: {np.mean(rewards):.2f} | "
+            f"Avg training Reward: {np.mean(rewards):.2f} | "
             f"Epsilon: {agent.EPSILON:.4f} | "
             f"Time: {episode_time:.2f}s | "
             f"Grad Norms: {np.mean(grad_norms):.2f} | "
             f"Batch Q values max: {batch_Q_values_max} | "
-            f"Batch Q values mean: {batch_Q_values_mean}")
+            f"Batch Q values mean: {batch_Q_values_mean} | "
+            f"Best Avg eval Reward: {best_evaluation_score}")
     
     # Close environment
     env.close()
+
+
 
 if __name__ == "__main__":
     # Set number of worker processes for data loading
